@@ -39,7 +39,7 @@ export default async function ClientsPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight font-heading">Clients</h1>
+          <h1 className="text-2xl font-bold font-heading">Clients</h1>
           <p className="text-muted-foreground">
             Manage your client base and health records.
           </p>

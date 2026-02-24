@@ -180,7 +180,7 @@ export default function SoapNotePage() {
           </Link>
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight font-heading">SOAP Note</h1>
+          <h1 className="text-2xl font-bold font-heading">SOAP Note</h1>
           <p className="text-muted-foreground">
             {client?.first_name} {client?.last_name} —{" "}
             {sessionType?.name as string}
