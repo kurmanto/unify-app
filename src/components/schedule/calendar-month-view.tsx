@@ -22,6 +22,7 @@ import {
   AppointmentPopoverContent,
   statusBorderColor,
 } from "@/components/schedule/appointment-popover-content";
+import { useActivePopover } from "@/components/schedule/active-popover-context";
 import type { CalendarAppointment } from "@/types";
 
 interface CalendarMonthViewProps {
@@ -34,6 +35,7 @@ export function CalendarMonthView({
   currentDate,
 }: CalendarMonthViewProps) {
   const router = useRouter();
+  const { activeId, toggle, close } = useActivePopover();
   const current = new Date(currentDate + "T12:00:00");
   const monthStart = startOfMonth(current);
   const monthEnd = endOfMonth(current);
@@ -78,7 +80,7 @@ export function CalendarMonthView({
           return (
             <div
               key={weekDateStr}
-              className={`group/week relative grid grid-cols-7 cursor-pointer ${
+              className={`group/week relative cursor-pointer ${
                 isThisWeek ? "bg-primary/[0.03]" : ""
               }`}
               onClick={(e) => {
@@ -96,7 +98,9 @@ export function CalendarMonthView({
               {/* Hover overlay */}
               <div className="absolute inset-0 group-hover/week:bg-primary/[0.03] transition-colors pointer-events-none" />
 
-              {week.map((day) => {
+              {/* Day cells in their own grid so nth-child works correctly */}
+              <div className="grid grid-cols-7 h-full">
+              {week.map((day, dayIdx) => {
                 const isCurrentMonth = isSameMonth(day, current);
                 const isToday = isSameDay(day, today);
                 const dateStr = format(day, "yyyy-MM-dd");
@@ -111,9 +115,9 @@ export function CalendarMonthView({
                 return (
                   <div
                     key={dateStr}
-                    className={`relative border-b border-r last:border-r-0 [&:nth-child(7n+1)]:border-r [&:nth-child(7n)]:border-r-0 p-2 flex flex-col ${
-                      !isCurrentMonth ? "bg-muted/10" : ""
-                    }`}
+                    className={`relative border-b p-2 flex flex-col ${
+                      dayIdx < 6 ? "border-r" : ""
+                    } ${!isCurrentMonth ? "bg-muted/10" : ""}`}
                   >
                     {/* Day number */}
                     <div className="flex justify-end mb-1">
@@ -159,7 +163,14 @@ export function CalendarMonthView({
                           .join(" \u00b7 ");
 
                         return (
-                          <Popover key={apt.id}>
+                          <Popover
+                            key={apt.id}
+                            open={activeId === apt.id}
+                            onOpenChange={(open) => {
+                              if (open) toggle(apt.id);
+                              else close();
+                            }}
+                          >
                             <PopoverTrigger asChild>
                               <button
                                 type="button"
@@ -172,7 +183,13 @@ export function CalendarMonthView({
                                 {chipLabel}
                               </button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-80 p-3" side="right" align="start">
+                            <PopoverContent
+                              className="w-80 p-3"
+                              side="right"
+                              align="start"
+                              onInteractOutside={(e) => e.preventDefault()}
+                              onPointerDownOutside={(e) => e.preventDefault()}
+                            >
                               <AppointmentPopoverContent appointment={apt} />
                             </PopoverContent>
                           </Popover>
@@ -190,6 +207,7 @@ export function CalendarMonthView({
                   </div>
                 );
               })}
+              </div>
             </div>
           );
         })}

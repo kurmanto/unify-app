@@ -119,6 +119,8 @@ export function CalendarDayColumn({
       // Skip them here so we don't start an empty-slot drag.
       if (target.closest("[data-appointment-block]")) return;
       if (target.closest("a") || target.closest("button")) return;
+      // Skip if a popover is open (e.g. reschedule date picker interaction)
+      if (document.querySelector("[data-slot='popover-content']")) return;
       const minutes = getMinutesFromY(e.clientY);
       dragRef.current = { startY: e.clientY, startMin: minutes, timestamp: Date.now() };
       setSelection(null);

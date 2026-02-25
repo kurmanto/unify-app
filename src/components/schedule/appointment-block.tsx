@@ -9,6 +9,7 @@ import {
   AppointmentPopoverContent,
   statusBorderColor,
 } from "@/components/schedule/appointment-popover-content";
+import { useActivePopover } from "@/components/schedule/active-popover-context";
 import type { CalendarAppointment } from "@/types";
 
 interface AppointmentBlockProps {
@@ -23,6 +24,9 @@ export function AppointmentBlock({
   style,
   compact = false,
 }: AppointmentBlockProps) {
+  const { activeId, toggle, close } = useActivePopover();
+  const isOpen = activeId === appointment.id;
+
   const client = appointment.client;
   const sessionType = appointment.session_type;
   const series = appointment.series;
@@ -62,9 +66,21 @@ export function AppointmentBlock({
   );
 
   return (
-    <Popover>
+    <Popover
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (open) toggle(appointment.id);
+        else close();
+      }}
+    >
       <PopoverTrigger asChild>{block}</PopoverTrigger>
-      <PopoverContent className="w-80 p-3" side="right" align="start">
+      <PopoverContent
+        className="w-80 p-3"
+        side="right"
+        align="start"
+        onInteractOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
+      >
         <AppointmentPopoverContent appointment={appointment} />
       </PopoverContent>
     </Popover>

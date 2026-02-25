@@ -22,6 +22,7 @@ import { CalendarWeekView } from "@/components/schedule/calendar-week-view";
 import { CalendarDayView } from "@/components/schedule/calendar-day-view";
 import { CalendarMonthView } from "@/components/schedule/calendar-month-view";
 import { AppointmentListView } from "@/components/schedule/appointment-list-view";
+import { ActivePopoverProvider, useActivePopover } from "@/components/schedule/active-popover-context";
 import type {
   TimeBlock,
   CalendarSlotClickData,
@@ -221,6 +222,131 @@ export function SchedulePageClient({
   }, [handleKeyDown]);
 
   return (
+    <ActivePopoverProvider>
+    <ScheduleContent
+      view={view}
+      calendarAppointments={calendarAppointments}
+      listAppointments={listAppointments}
+      timeBlocks={timeBlocks}
+      initialStatus={initialStatus}
+      rangeStart={rangeStart}
+      currentDate={currentDate}
+      showWeekends={showWeekends}
+      onToggleWeekends={handleToggleWeekends}
+      dateLabel={dateLabel}
+      prevDate={prevDate}
+      nextDate={nextDate}
+      appointmentDialogOpen={appointmentDialogOpen}
+      onAppointmentDialogChange={handleAppointmentDialogChange}
+      timeBlockDialogOpen={timeBlockDialogOpen}
+      onTimeBlockDialogChange={handleTimeBlockDialogChange}
+      slotData={slotData}
+      dragData={dragData}
+      editingBlock={editingBlock}
+      onSlotClick={handleSlotClick}
+      onDragSelect={handleDragSelect}
+      onTimeBlockClick={handleTimeBlockClick}
+      onNewAppointment={handleNewAppointment}
+      onBlockTime={handleBlockTime}
+      onAppointmentDrop={handleAppointmentDrop}
+      pendingDrop={pendingDrop}
+      setPendingDrop={setPendingDrop}
+      isRescheduling={isRescheduling}
+      confirmReschedule={confirmReschedule}
+    />
+    </ActivePopoverProvider>
+  );
+}
+
+// ─── Inner component with access to ActivePopoverContext ──
+
+interface ScheduleContentProps {
+  view: ScheduleView;
+  calendarAppointments: CalendarAppointment[];
+  listAppointments: ListAppointment[];
+  timeBlocks: TimeBlock[];
+  initialStatus: string;
+  rangeStart: string;
+  currentDate: string;
+  showWeekends: boolean;
+  onToggleWeekends: () => void;
+  dateLabel: string;
+  prevDate: string;
+  nextDate: string;
+  appointmentDialogOpen: boolean;
+  onAppointmentDialogChange: (open: boolean) => void;
+  timeBlockDialogOpen: boolean;
+  onTimeBlockDialogChange: (open: boolean) => void;
+  slotData: CalendarSlotClickData | null;
+  dragData: DragSelectData | null;
+  editingBlock: TimeBlock | undefined;
+  onSlotClick: (data: CalendarSlotClickData) => void;
+  onDragSelect: (data: DragSelectData) => void;
+  onTimeBlockClick: (block: TimeBlock) => void;
+  onNewAppointment: () => void;
+  onBlockTime: () => void;
+  onAppointmentDrop: (data: AppointmentDropData) => void;
+  pendingDrop: AppointmentDropData | null;
+  setPendingDrop: (data: AppointmentDropData | null) => void;
+  isRescheduling: boolean;
+  confirmReschedule: () => void;
+}
+
+function ScheduleContent({
+  view,
+  calendarAppointments,
+  listAppointments,
+  timeBlocks,
+  initialStatus,
+  rangeStart,
+  currentDate,
+  showWeekends,
+  onToggleWeekends,
+  dateLabel,
+  prevDate,
+  nextDate,
+  appointmentDialogOpen,
+  onAppointmentDialogChange,
+  timeBlockDialogOpen,
+  onTimeBlockDialogChange,
+  slotData,
+  dragData,
+  editingBlock,
+  onSlotClick,
+  onDragSelect,
+  onTimeBlockClick,
+  onNewAppointment,
+  onBlockTime,
+  onAppointmentDrop,
+  pendingDrop,
+  setPendingDrop,
+  isRescheduling,
+  confirmReschedule,
+}: ScheduleContentProps) {
+  const { close: closePopover } = useActivePopover();
+
+  // Wrap handlers that should close the active popover
+  function handleSlotClick(data: CalendarSlotClickData) {
+    closePopover();
+    onSlotClick(data);
+  }
+
+  function handleNewAppointment() {
+    closePopover();
+    onNewAppointment();
+  }
+
+  function handleBlockTime() {
+    closePopover();
+    onBlockTime();
+  }
+
+  function handleDragSelect(data: DragSelectData) {
+    closePopover();
+    onDragSelect(data);
+  }
+
+  return (
     <div className="flex flex-col h-full gap-3">
       {/* Header */}
       <div className="flex items-center justify-between flex-shrink-0">
@@ -253,7 +379,7 @@ export function SchedulePageClient({
           nextDate={nextDate}
           currentDate={currentDate}
           showWeekends={showWeekends}
-          onToggleWeekends={handleToggleWeekends}
+          onToggleWeekends={onToggleWeekends}
         />
       </div>
 
@@ -266,9 +392,9 @@ export function SchedulePageClient({
           rangeStart={rangeStart}
           showWeekends={showWeekends}
           onSlotClick={handleSlotClick}
-          onTimeBlockClick={handleTimeBlockClick}
+          onTimeBlockClick={onTimeBlockClick}
           onDragSelect={handleDragSelect}
-          onAppointmentDrop={handleAppointmentDrop}
+          onAppointmentDrop={onAppointmentDrop}
         />
       )}
       {view === "day" && (
@@ -277,9 +403,9 @@ export function SchedulePageClient({
           timeBlocks={timeBlocks}
           currentDate={currentDate}
           onSlotClick={handleSlotClick}
-          onTimeBlockClick={handleTimeBlockClick}
+          onTimeBlockClick={onTimeBlockClick}
           onDragSelect={handleDragSelect}
-          onAppointmentDrop={handleAppointmentDrop}
+          onAppointmentDrop={onAppointmentDrop}
         />
       )}
       {view === "month" && (
@@ -299,14 +425,14 @@ export function SchedulePageClient({
       {/* Dialogs */}
       <AppointmentDialog
         open={appointmentDialogOpen}
-        onOpenChange={handleAppointmentDialogChange}
+        onOpenChange={onAppointmentDialogChange}
         defaultDate={slotData?.date}
         defaultTime={slotData?.time}
       />
 
       <TimeBlockDialog
         open={timeBlockDialogOpen}
-        onOpenChange={handleTimeBlockDialogChange}
+        onOpenChange={onTimeBlockDialogChange}
         defaultDate={dragData?.date || slotData?.date}
         defaultTime={dragData?.startTime || slotData?.time}
         defaultEndTime={dragData?.endTime}
