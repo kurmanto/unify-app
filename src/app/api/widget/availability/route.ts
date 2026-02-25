@@ -72,13 +72,22 @@ export async function GET(request: NextRequest) {
   const dayStart = new Date(date + "T00:00:00").toISOString();
   const dayEnd = new Date(date + "T23:59:59").toISOString();
 
-  const { data: existingAppointments } = await supabase
-    .from("appointments")
-    .select("starts_at, ends_at")
-    .eq("practitioner_id", practitionerId)
-    .gte("starts_at", dayStart)
-    .lte("starts_at", dayEnd)
-    .not("status", "in", '("cancelled","no_show")');
+  const [{ data: existingAppointments }, { data: existingTimeBlocks }] =
+    await Promise.all([
+      supabase
+        .from("appointments")
+        .select("starts_at, ends_at")
+        .eq("practitioner_id", practitionerId)
+        .gte("starts_at", dayStart)
+        .lte("starts_at", dayEnd)
+        .not("status", "in", '("cancelled","no_show")'),
+      supabase
+        .from("time_blocks")
+        .select("starts_at, ends_at")
+        .eq("practitioner_id", practitionerId)
+        .gte("starts_at", dayStart)
+        .lte("starts_at", dayEnd),
+    ]);
 
   // Generate available slots
   const slots: string[] = [];
@@ -116,7 +125,14 @@ export async function GET(request: NextRequest) {
       );
     });
 
-    if (!inBreak && !hasConflict) {
+    // Check conflicts with time blocks
+    const hasBlockConflict = (existingTimeBlocks || []).some((block) => {
+      const blockStart = new Date(block.starts_at).getTime();
+      const blockEnd = new Date(block.ends_at).getTime();
+      return slotStart.getTime() < blockEnd && slotEnd.getTime() > blockStart;
+    });
+
+    if (!inBreak && !hasConflict && !hasBlockConflict) {
       slots.push(
         slotStart.toLocaleTimeString("en-CA", {
           hour: "2-digit",

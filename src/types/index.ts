@@ -199,6 +199,21 @@ export interface Payment {
   created_at: string;
 }
 
+export interface TimeBlock {
+  id: string;
+  practitioner_id: string;
+  title: string;
+  starts_at: string;
+  ends_at: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface CalendarSlotClickData {
+  date: string;  // "YYYY-MM-DD"
+  time: string;  // "HH:mm"
+}
+
 // ─── Nested / JSON Types ─────────────────────────────────
 
 export interface Address {
@@ -271,4 +286,39 @@ export interface NavItem {
   href: string;
   icon: string;
   badge?: number;
+}
+
+// ─── Schedule Types ─────────────────────────────────────
+
+export type ScheduleView = "day" | "week" | "month" | "list";
+
+export interface DragSelectData {
+  date: string;       // "YYYY-MM-DD"
+  startTime: string;  // "HH:mm"
+  endTime: string;    // "HH:mm"
+}
+
+export interface AppointmentDropData {
+  appointmentId: string;
+  newStartsAt: string;
+  newEndsAt: string;
+}
+
+export interface AppointmentDragGhost {
+  appointment: CalendarAppointment;
+  startMinutes: number;
+  endMinutes: number;
+}
+
+export interface CalendarAppointment {
+  id: string;
+  starts_at: string;
+  ends_at: string;
+  status: string;
+  session_number: number | null;
+  series_id: string | null;
+  client_id: string | null;
+  client: { first_name: string; last_name: string; email: string | null; phone: string | null } | null;
+  session_type: { name: string; duration_minutes: number } | null;
+  series: { total_sessions: number; current_session: number } | null;
 }

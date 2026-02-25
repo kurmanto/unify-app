@@ -17,7 +17,7 @@ import { createClient } from "@/lib/supabase/client";
 
 const pageNames: Record<string, string> = {
   "/dashboard": "Dashboard",
-  "/calendar": "Calendar",
+  "/schedule": "Schedule",
   "/clients": "Clients",
   "/appointments": "Appointments",
   "/notes": "SOAP Notes",

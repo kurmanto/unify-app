@@ -22,7 +22,7 @@ export default async function DashboardLayout({
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden rounded-xl bg-background border shadow-sm">
         <Header />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6 animate-page-in">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6 animate-page-in [scrollbar-gutter:stable]">{children}</main>
       </div>
     </div>
   );
