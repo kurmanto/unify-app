@@ -312,10 +312,29 @@ export function AppointmentDialog({
               <Label className="text-sm font-medium">Ten Series</Label>
               {activeSeries && selectedSeriesId ? (
                 <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    Active series — Session {activeSeries.current_session + 1} of{" "}
-                    {activeSeries.total_sessions}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground">
+                      Active series — Session
+                    </p>
+                    <Select
+                      value={String(sessionNumber || activeSeries.current_session + 1)}
+                      onValueChange={(val) => setSessionNumber(Number(val))}
+                    >
+                      <SelectTrigger className="w-16 h-7 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: activeSeries.total_sessions }, (_, i) => i + 1).map((n) => (
+                          <SelectItem key={n} value={String(n)}>
+                            {n}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      of {activeSeries.total_sessions}
+                    </p>
+                  </div>
                   <Button
                     type="button"
                     variant="ghost"
