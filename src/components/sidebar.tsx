@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   Calendar,
   Users,
-  ClipboardList,
   StickyNote,
   FileText,
   Mail,
@@ -24,9 +23,8 @@ import { createClient } from "@/lib/supabase/client";
 
 const practiceNav = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Calendar", href: "/calendar", icon: Calendar },
+  { title: "Schedule", href: "/schedule", icon: Calendar },
   { title: "Clients", href: "/clients", icon: Users },
-  { title: "Appointments", href: "/appointments", icon: ClipboardList },
   { title: "SOAP Notes", href: "/notes", icon: StickyNote },
   { title: "Forms", href: "/forms", icon: FileText },
 ];

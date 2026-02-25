@@ -49,8 +49,27 @@ interface SeriesOption {
   status: string;
 }
 
-export function AppointmentDialog({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+interface AppointmentDialogProps {
+  children?: React.ReactNode;
+  defaultDate?: string;
+  defaultTime?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function AppointmentDialog({
+  children,
+  defaultDate,
+  defaultTime,
+  open: controlledOpen,
+  onOpenChange,
+}: AppointmentDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled
+    ? (v: boolean) => onOpenChange?.(v)
+    : setInternalOpen;
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [sessionTypes, setSessionTypes] = useState<SessionTypeOption[]>([]);
@@ -247,7 +266,7 @@ export function AppointmentDialog({ children }: { children: React.ReactNode }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-heading">New Appointment</DialogTitle>
@@ -350,11 +369,11 @@ export function AppointmentDialog({ children }: { children: React.ReactNode }) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="date">Date</Label>
-              <Input id="date" name="date" type="date" required className="input-premium" />
+              <Input id="date" name="date" type="date" required className="input-premium" defaultValue={defaultDate} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="time">Time</Label>
-              <Input id="time" name="time" type="time" required className="input-premium" />
+              <Input id="time" name="time" type="time" required className="input-premium" defaultValue={defaultTime} />
             </div>
           </div>
           <div className="space-y-2">
