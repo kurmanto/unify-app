@@ -310,6 +310,71 @@ export interface AppointmentDragGhost {
   endMinutes: number;
 }
 
+// ─── Client List & Detail Types ─────────────────────────
+
+export interface ClientListItem extends Client {
+  active_series: Series | null;
+  last_visit: string | null;
+  next_appointment: string | null;
+  total_completed_sessions: number;
+}
+
+export type BodyRegion =
+  | "head"
+  | "jaw"
+  | "neck"
+  | "shoulders"
+  | "chest"
+  | "upper_back"
+  | "mid_back"
+  | "lower_back"
+  | "arms"
+  | "forearms"
+  | "hands"
+  | "abdomen"
+  | "pelvis"
+  | "hips"
+  | "sacrum"
+  | "glutes"
+  | "upper_legs"
+  | "knees"
+  | "lower_legs"
+  | "ankles"
+  | "feet"
+  | "it_band"
+  | "inner_legs"
+  | "side_body";
+
+export interface ClientInsights {
+  next_session_recommendations: string[];
+  treatment_patterns: string[];
+  progress_summary: string;
+  areas_of_concern: string[];
+  body_area_frequency: Record<string, number>;
+  pre_session_briefing: string;
+}
+
+export interface ClientCommunication {
+  id: string;
+  client_id: string;
+  practitioner_id: string;
+  type: "email" | "reminder" | "intake_request" | "follow_up";
+  subject: string;
+  body_html: string;
+  sent_at: string;
+  status: "sent" | "delivered" | "failed" | "opened";
+  resend_message_id: string | null;
+}
+
+export interface AiInsightCache {
+  id: string;
+  client_id: string;
+  practitioner_id: string;
+  insights: ClientInsights;
+  generated_at: string;
+  soap_note_count: number;
+}
+
 export interface CalendarAppointment {
   id: string;
   starts_at: string;

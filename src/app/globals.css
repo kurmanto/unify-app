@@ -302,3 +302,43 @@
 .dark .badge-unpaid {
   @apply bg-stone-800 text-stone-300 border-stone-700;
 }
+
+/* Ten Series phase colors */
+.phase-sleeve {
+  --phase-color: oklch(0.55 0.12 250);
+  --phase-bg: oklch(0.95 0.03 250);
+}
+.phase-core {
+  --phase-color: oklch(0.55 0.12 75);
+  --phase-bg: oklch(0.95 0.03 75);
+}
+.phase-integration {
+  --phase-color: oklch(0.55 0.12 155);
+  --phase-bg: oklch(0.95 0.03 155);
+}
+
+.dark .phase-sleeve {
+  --phase-color: oklch(0.7 0.12 250);
+  --phase-bg: oklch(0.25 0.03 250);
+}
+.dark .phase-core {
+  --phase-color: oklch(0.7 0.12 75);
+  --phase-bg: oklch(0.25 0.03 75);
+}
+.dark .phase-integration {
+  --phase-color: oklch(0.7 0.12 155);
+  --phase-bg: oklch(0.25 0.03 155);
+}
+
+/* Body map region styles */
+.body-region {
+  transition: opacity 0.2s ease, fill 0.2s ease;
+  cursor: pointer;
+}
+.body-region:hover {
+  opacity: 0.8;
+}
+.body-region.active {
+  stroke: oklch(0.45 0.1 172);
+  stroke-width: 1.5;
+}

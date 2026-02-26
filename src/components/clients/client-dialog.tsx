@@ -37,13 +37,20 @@ export function ClientDialog({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    const tagsStr = formData.get("tags") as string;
+    const tags = tagsStr
+      ? tagsStr.split(",").map((t) => t.trim()).filter(Boolean)
+      : [];
+
     const { error } = await supabase.from("clients").insert({
       practitioner_id: user.id,
       first_name: formData.get("first_name") as string,
       last_name: formData.get("last_name") as string,
       email: formData.get("email") as string,
       phone: (formData.get("phone") as string) || null,
+      date_of_birth: (formData.get("date_of_birth") as string) || null,
       notes: (formData.get("notes") as string) || null,
+      tags,
     });
 
     if (error) {
@@ -84,13 +91,23 @@ export function ClientDialog({ children }: { children: React.ReactNode }) {
             <Label htmlFor="email">Email</Label>
             <Input id="email" name="email" type="email" required className="input-premium" />
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input id="phone" name="phone" type="tel" className="input-premium" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="date_of_birth">Date of Birth</Label>
+              <Input id="date_of_birth" name="date_of_birth" type="date" className="input-premium" />
+            </div>
+          </div>
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input id="phone" name="phone" type="tel" className="input-premium" />
+            <Label htmlFor="tags">Tags</Label>
+            <Input id="tags" name="tags" placeholder="e.g. athlete, chronic pain (comma separated)" className="input-premium" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
-            <Textarea id="notes" name="notes" rows={3} className="input-premium" />
+            <Textarea id="notes" name="notes" rows={2} className="input-premium" />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
