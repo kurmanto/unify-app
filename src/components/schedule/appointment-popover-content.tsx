@@ -286,6 +286,15 @@ export function AppointmentPopoverContent({ appointment }: AppointmentPopoverCon
       return;
     }
 
+    // Auto-create draft SOAP note on check-in
+    if (newStatus === "checked_in") {
+      fetch("/api/notes/auto-create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appointment_id: appointment.id }),
+      }).catch(() => {});
+    }
+
     // Series session tracking
     if (appointment.series_id && appointment.session_number && series) {
       if (newStatus === "completed" && appointment.session_number === series.total_sessions) {
@@ -551,6 +560,19 @@ export function AppointmentPopoverContent({ appointment }: AppointmentPopoverCon
           <Link href={`/appointments/${appointment.id}`}>View Details</Link>
         </Button>
       </div>
+
+      {/* SOAP Note link */}
+      {(appointment.status === "checked_in" || appointment.status === "completed") && (
+        <Button variant="outline" size="sm" className="w-full h-7 text-xs" asChild>
+          <Link href={`/notes/${appointment.id}`}>
+            {appointment.soap_note_status === "complete"
+              ? "View SOAP Note"
+              : appointment.soap_note_status === "draft"
+                ? "Continue SOAP Note"
+                : "Create SOAP Note"}
+          </Link>
+        </Button>
+      )}
     </div>
   );
 }

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { generateSoapNote } from "@/lib/ai/soap-generator";
+import { getSessionGuide } from "@/lib/rolfing/ten-series";
+import type { TranscriptWord } from "@/types";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -13,6 +16,10 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const audioFile = formData.get("audio") as File;
+  const appointmentId = formData.get("appointment_id") as string | null;
+  const clientId = formData.get("client_id") as string | null;
+  const sessionNumber = formData.get("session_number") as string | null;
+  const recordingMode = formData.get("recording_mode") as string | null;
 
   if (!audioFile) {
     return NextResponse.json({ error: "No audio file provided" }, { status: 400 });
@@ -26,11 +33,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Send to Deepgram for transcription
+  // Send to Deepgram with utterances for word-level timestamps
   const audioBuffer = await audioFile.arrayBuffer();
 
   const response = await fetch(
-    "https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&paragraphs=true",
+    "https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&paragraphs=true&utterances=true",
     {
       method: "POST",
       headers: {
@@ -53,60 +60,110 @@ export async function POST(request: NextRequest) {
   const transcript =
     result.results?.channels?.[0]?.alternatives?.[0]?.transcript || "";
 
-  // Optionally structure the transcript into SOAP format using AI
-  let structuredNote = null;
-  const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
+  // Extract word-level timestamps
+  const rawWords = result.results?.channels?.[0]?.alternatives?.[0]?.words || [];
+  const words: TranscriptWord[] = rawWords.map(
+    (w: { word: string; start: number; end: number; confidence: number }) => ({
+      word: w.word,
+      start: w.start,
+      end: w.end,
+      confidence: w.confidence,
+    })
+  );
 
-  if (anthropicApiKey && transcript) {
-    const sessionContext = formData.get("session_context") as string;
+  // Fetch context for AI structuring
+  let previousNoteSummary: string | undefined;
+  let sessionGuide: ReturnType<typeof getSessionGuide> | undefined;
+  let clientHistory: string | undefined;
 
-    const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": anthropicApiKey,
-        "content-type": "application/json",
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 2000,
-        messages: [
-          {
-            role: "user",
-            content: `You are a clinical documentation assistant for a Rolfing Structural Integration practitioner. Structure the following voice dictation into SOAP note format.
+  if (clientId) {
+    // Fetch previous notes for this client
+    const { data: prevNotes } = await supabase
+      .from("soap_notes")
+      .select("subjective, assessment, plan, appointment:appointments!inner(session_number, client_id)")
+      .eq("practitioner_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
 
-${sessionContext ? `Session context: ${sessionContext}` : ""}
-
-Voice dictation transcript:
-${transcript}
-
-Return a JSON object with these fields:
-- subjective: Client's reported symptoms, concerns, experience
-- objective: Practitioner's observations and findings
-- assessment: Clinical assessment
-- plan: Treatment plan and follow-up
-
-Return ONLY the JSON object, no other text.`,
-          },
-        ],
-      }),
+    const clientNotes = (prevNotes || []).filter((n) => {
+      const apt = n.appointment as unknown as Record<string, unknown> | null;
+      return apt?.client_id === clientId;
     });
 
-    if (aiResponse.ok) {
-      const aiResult = await aiResponse.json();
-      const content = aiResult.content?.[0]?.text;
-      if (content) {
-        try {
-          structuredNote = JSON.parse(content);
-        } catch {
-          // If parsing fails, just use the raw transcript
-        }
+    if (clientNotes.length > 0) {
+      previousNoteSummary = clientNotes
+        .slice(0, 3)
+        .map((n) => `S: ${n.subjective || "N/A"} | A: ${n.assessment || "N/A"} | P: ${n.plan || "N/A"}`)
+        .join("\n");
+    }
+
+    // Fetch client health history
+    const { data: client } = await supabase
+      .from("clients")
+      .select("health_history")
+      .eq("id", clientId)
+      .single();
+
+    if (client?.health_history) {
+      clientHistory = JSON.stringify(client.health_history);
+    }
+  }
+
+  if (sessionNumber) {
+    sessionGuide = getSessionGuide(parseInt(sessionNumber, 10));
+  }
+
+  // AI structuring
+  let structuredNote = null;
+  if (transcript) {
+    try {
+      structuredNote = await generateSoapNote({
+        transcript,
+        sessionNumber: sessionNumber ? parseInt(sessionNumber, 10) : undefined,
+        sessionName: sessionGuide?.name,
+        clientHistory,
+        previousNotes: previousNoteSummary,
+        tenSeriesGuide: sessionGuide
+          ? {
+              goals: sessionGuide.goals,
+              focus_areas: sessionGuide.focus_areas,
+              techniques: sessionGuide.techniques,
+              philosophy: sessionGuide.philosophy,
+            }
+          : undefined,
+        recordingMode: recordingMode as "dictation" | "live_intake" | undefined,
+      });
+    } catch {
+      // AI structuring is optional — return transcript regardless
+    }
+  }
+
+  // Optionally store audio in Supabase Storage
+  let audioUrl: string | null = null;
+  if (appointmentId) {
+    try {
+      const fileName = `soap-recordings/${user.id}/${appointmentId}-${Date.now()}.webm`;
+      const { error: uploadError } = await supabase.storage
+        .from("documents")
+        .upload(fileName, audioBuffer, {
+          contentType: audioFile.type || "audio/webm",
+        });
+
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage
+          .from("documents")
+          .getPublicUrl(fileName);
+        audioUrl = urlData.publicUrl;
       }
+    } catch {
+      // Storage upload is optional
     }
   }
 
   return NextResponse.json({
     transcript,
+    words,
     structured_note: structuredNote,
+    audio_url: audioUrl,
   });
 }

@@ -35,6 +35,10 @@ export type CampaignStatus =
   | "sent"
   | "cancelled";
 
+export type SoapNoteStatus = "draft" | "complete";
+
+export type RecordingMode = "dictation" | "live_intake";
+
 export type DocumentType =
   | "intake_form"
   | "consent_form"
@@ -112,6 +116,14 @@ export interface Series {
   completed_at: string | null;
 }
 
+export interface BodyMapDrawing {
+  type: "path" | "arrow";
+  d: string;          // SVG path d attribute
+  color: string;
+  strokeWidth: number;
+  view: "front" | "back";
+}
+
 export interface SoapNote {
   id: string;
   appointment_id: string;
@@ -125,7 +137,47 @@ export interface SoapNote {
   techniques_used: string[] | null;
   session_goals: string[] | null;
   pre_session_notes: string | null;
+  status: SoapNoteStatus;
+  updated_at: string;
+  ai_suggestions: AiSoapSuggestions | null;
+  recording_mode: RecordingMode | null;
+  recording_duration_seconds: number | null;
+  audio_url: string | null;
+  body_map_drawings: BodyMapDrawing[] | null;
   created_at: string;
+}
+
+export interface AiSoapSuggestions {
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+  techniques: string[];
+  focus_areas: string[];
+  session_goals: string[];
+}
+
+export interface TranscriptWord {
+  word: string;
+  start: number;
+  end: number;
+  confidence: number;
+}
+
+export interface PreSessionBriefing {
+  last_session_plan: string | null;
+  client_concerns: string[];
+  ten_series_guide: {
+    session: number;
+    name: string;
+    goals: string[];
+    focus_areas: string[];
+    techniques: string[];
+    philosophy: string;
+  } | null;
+  recommended_techniques: string[];
+  follow_up_areas: string[];
+  ai_briefing: string | null;
 }
 
 export interface IntakeForm {
@@ -386,4 +438,5 @@ export interface CalendarAppointment {
   client: { first_name: string; last_name: string; email: string | null; phone: string | null } | null;
   session_type: { name: string; duration_minutes: number } | null;
   series: { total_sessions: number; current_session: number } | null;
+  soap_note_status?: SoapNoteStatus | null;
 }

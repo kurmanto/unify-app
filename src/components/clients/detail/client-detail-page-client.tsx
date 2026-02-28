@@ -110,6 +110,7 @@ export function ClientDetailPageClient({
           onRegionSelect={setFilterRegion}
         />
         <SessionTimeline
+          clientId={client.id}
           appointments={appointments}
           soapNotes={soapNotes}
           filterRegion={filterRegion}

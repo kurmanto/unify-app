@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { ExternalLink } from "lucide-react";
 import type { Appointment, SoapNote, SessionType } from "@/types";
 
 interface SessionTimelineItemProps {
@@ -72,6 +74,29 @@ export function SessionTimelineItem({
           >
             {appointment.payment_status}
           </Badge>
+          {soapNote && (
+            <div className="flex items-center gap-1">
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-[10px]",
+                  soapNote.status === "complete"
+                    ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
+                    : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800"
+                )}
+              >
+                {soapNote.status === "complete" ? "Note ✓" : "Draft"}
+              </Badge>
+              <Link
+                href={`/notes/${appointment.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-muted-foreground hover:text-primary transition-colors"
+                title="Open in editor"
+              >
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </button>

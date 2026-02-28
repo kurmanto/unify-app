@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Users, DollarSign } from "lucide-react";
+import { Calendar, Clock, Users, DollarSign, FileCheck, FilePen, FileText } from "lucide-react";
+import Link from "next/link";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -16,7 +17,7 @@ export default async function DashboardPage() {
 
   const { data: todayAppointments } = await supabase
     .from("appointments")
-    .select("*, client:clients(*), session_type:session_types(*)")
+    .select("*, client:clients(*), session_type:session_types(*), soap_note:soap_notes(id, status)")
     .gte("starts_at", startOfDay)
     .lte("starts_at", endOfDay)
     .order("starts_at", { ascending: true });
@@ -137,12 +138,44 @@ export default async function DashboardPage() {
                         </p>
                       </div>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className={`badge-${apt.status as string}`}
-                    >
-                      {apt.status as string}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      {/* SOAP note status icon */}
+                      {(() => {
+                        const soapNote = apt.soap_note as
+                          | { id: string; status: string }[]
+                          | { id: string; status: string }
+                          | null;
+                        const noteData = Array.isArray(soapNote) ? soapNote[0] : soapNote;
+                        if (noteData?.status === "complete") {
+                          return (
+                            <Link href={`/notes/${apt.id}`} title="View SOAP note">
+                              <FileCheck className="h-4 w-4 text-green-500" />
+                            </Link>
+                          );
+                        }
+                        if (noteData?.status === "draft") {
+                          return (
+                            <Link href={`/notes/${apt.id}`} title="Continue SOAP note">
+                              <FilePen className="h-4 w-4 text-amber-500" />
+                            </Link>
+                          );
+                        }
+                        if (apt.status === "checked_in" || apt.status === "completed") {
+                          return (
+                            <Link href={`/notes/${apt.id}`} title="Create SOAP note">
+                              <FileText className="h-4 w-4 text-muted-foreground/40" />
+                            </Link>
+                          );
+                        }
+                        return null;
+                      })()}
+                      <Badge
+                        variant="outline"
+                        className={`badge-${apt.status as string}`}
+                      >
+                        {apt.status as string}
+                      </Badge>
+                    </div>
                   </div>
                 );
               })}
