@@ -56,6 +56,16 @@ export function AppointmentBlock({
         {seriesLabel && (
           <span className="ml-1 text-muted-foreground font-normal">{seriesLabel}</span>
         )}
+        {appointment.soap_note_status && (
+          <span
+            className={`inline-block ml-1 h-1.5 w-1.5 rounded-full ${
+              appointment.soap_note_status === "complete"
+                ? "bg-green-500"
+                : "bg-amber-500"
+            }`}
+            title={`Note: ${appointment.soap_note_status}`}
+          />
+        )}
       </p>
       {!compact && (
         <p className={`text-muted-foreground truncate ${isCancelled ? "line-through" : ""}`}>

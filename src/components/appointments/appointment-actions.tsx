@@ -50,6 +50,15 @@ export function AppointmentActions({
       return;
     }
 
+    // Auto-create draft SOAP note on check-in
+    if (newStatus === "checked_in") {
+      fetch("/api/notes/auto-create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appointment_id: appointmentId }),
+      }).catch(() => {});
+    }
+
     // Complete the series when session 10 is marked completed
     if (newStatus === "completed" && seriesId && sessionNumber === 10) {
       const { error: seriesError } = await supabase

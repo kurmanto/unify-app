@@ -73,7 +73,7 @@ export default async function SchedulePage({
   const calendarQuery = supabase
     .from("appointments")
     .select(
-      "id, starts_at, ends_at, status, session_number, series_id, client_id, client:clients(first_name, last_name, email, phone), session_type:session_types(name, duration_minutes), series:series(total_sessions, current_session)"
+      "id, starts_at, ends_at, status, session_number, series_id, client_id, client:clients(first_name, last_name, email, phone), session_type:session_types(name, duration_minutes), series:series(total_sessions, current_session), soap_note:soap_notes(status)"
     )
     .gte("starts_at", rangeStart.toISOString())
     .lte("starts_at", rangeEnd.toISOString())
@@ -106,10 +106,22 @@ export default async function SchedulePage({
     { data: listAppointments },
   ] = await Promise.all([calendarQuery, timeBlocksQuery, listQuery]);
 
+  // Map soap_note join to soap_note_status flat field
+  const mappedCalendarAppointments = (calendarAppointments || []).map((apt: any) => {
+    const soapNote = apt.soap_note;
+    const { soap_note: _, ...rest } = apt;
+    return {
+      ...rest,
+      soap_note_status: Array.isArray(soapNote)
+        ? soapNote[0]?.status || null
+        : soapNote?.status || null,
+    };
+  });
+
   return (
     <SchedulePageClient
       view={view}
-      calendarAppointments={(calendarAppointments as any[]) || []}
+      calendarAppointments={mappedCalendarAppointments}
       listAppointments={(listAppointments as any[]) || []}
       timeBlocks={timeBlocksData || []}
       initialStatus={status}

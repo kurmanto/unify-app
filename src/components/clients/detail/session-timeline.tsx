@@ -1,10 +1,14 @@
 "use client";
 
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GitCompareArrows } from "lucide-react";
 import { SessionTimelineItem } from "./session-timeline-item";
 import type { Appointment, SoapNote, SessionType } from "@/types";
 
 interface SessionTimelineProps {
+  clientId: string;
   appointments: (Appointment & { session_type?: SessionType | null })[];
   soapNotes: SoapNote[];
   onSessionClick?: (appointmentId: string) => void;
@@ -12,11 +16,18 @@ interface SessionTimelineProps {
 }
 
 export function SessionTimeline({
+  clientId,
   appointments,
   soapNotes,
   onSessionClick,
   filterRegion,
 }: SessionTimelineProps) {
+  // Count completed sessions with SOAP notes for compare button
+  const completedWithNotes = appointments.filter((apt) => {
+    const note = soapNotes.find((n) => n.appointment_id === apt.id);
+    return apt.status === "completed" && note;
+  });
+
   // Sort most recent first
   const sorted = [...appointments].sort(
     (a, b) =>
@@ -39,10 +50,20 @@ export function SessionTimeline({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-heading">Sessions</CardTitle>
-          <span className="text-xs text-muted-foreground">
-            {filtered.length} session{filtered.length !== 1 ? "s" : ""}
-            {filterRegion && ` (filtered: ${filterRegion})`}
-          </span>
+          <div className="flex items-center gap-2">
+            {completedWithNotes.length >= 2 && (
+              <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
+                <Link href={`/clients/${clientId}/compare`}>
+                  <GitCompareArrows className="h-3 w-3 mr-1" />
+                  Compare
+                </Link>
+              </Button>
+            )}
+            <span className="text-xs text-muted-foreground">
+              {filtered.length} session{filtered.length !== 1 ? "s" : ""}
+              {filterRegion && ` (filtered: ${filterRegion})`}
+            </span>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

@@ -13,9 +13,10 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Pencil, Save, X } from "lucide-react";
+import { Pencil, Save, X, ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import Link from "next/link";
 import type { SoapNote, Appointment, SessionType } from "@/types";
 
 interface SoapNoteSheetProps {
@@ -111,6 +112,16 @@ export function SoapNoteSheet({
             </div>
           ) : (
             <div className="space-y-4 pb-4">
+              {/* Open full editor */}
+              {appointment && (
+                <Button variant="outline" size="sm" className="w-full" asChild>
+                  <Link href={`/notes/${appointment.id}`}>
+                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                    Open Full Editor
+                  </Link>
+                </Button>
+              )}
+
               {/* Edit toggle */}
               <div className="flex justify-end">
                 {editing ? (
